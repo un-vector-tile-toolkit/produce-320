@@ -1,3 +1,8 @@
+pbf
+mbtiles
+extractConfig.json
+exportConfig.json
+
 # Logs
 logs
 *.log
