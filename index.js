@@ -3,6 +3,7 @@ const Queue = require('better-queue')
 const { spawnSync, spawn } = require('child_process')
 const tilebelt = require('@mapbox/tilebelt')
 const fs = require('fs')
+const path = require('path')
 const TimeFormat = require('hh-mm-ss')
 const pretty = require('prettysize')
 const modify = require(config.get('modifyPath'))
@@ -33,6 +34,7 @@ const extract = (z, x, y) => {
   return new Promise((resolve, reject) => {
     const bbox = tilebelt.tileToBBOX([x, y, z])
     const extractConfigPath = tempy.file({ extension: 'json' })
+    const tmpPath = `${pbfDirPath}/part-${z}-${x}-${y}.osm.pbf`
     const dstPath = `${pbfDirPath}/${z}-${x}-${y}.osm.pbf`
     if (fs.existsSync(dstPath)) {
       winston.info(`${iso()}: ${dstPath} is already there.`)
@@ -41,20 +43,21 @@ const extract = (z, x, y) => {
 
     const extractConfig = {
       extracts: [{
-        output: `${z}-${x}-${y}.osm.pbf`,
+        output: path.basename(tmpPath),
         output_format: 'pbf',
         bbox: bbox
       }],
-      directory: pbfDirPath
+      directory: path.dirname(tmpPath)
     }
     fs.writeFileSync(extractConfigPath, JSON.stringify(extractConfig))
     winston.info(`${iso()}: ${z}-${x}-${y} osmium extract started`)
 
     const osmium = spawn('osmium', [
       'extract', '--config', extractConfigPath,
-      '--strategy=smart', '--overwrite',
+      '--strategy=smart', '--overwrite', '--no-progress',
       planetPath], { stdio: 'inherit' })
     osmium.on('close', () => { 
+      fs.renameSync(tmpPath, dstPath)
       fs.unlinkSync(extractConfigPath)
       winston.info(`${iso()}: ${z}-${x}-${y} osmium extract finished`)
       resolve(null)
@@ -112,10 +115,8 @@ const produce = (z, x, y) => {
     osmium.stdout.pipe(jsonTextSequenceParser)
 
     tippecanoe.on('close', () => {
-      fs.rename(tmpPath, dstPath, err => {
-        if (err) reject(err)
-        resolve(null)
-      })
+      fs.rename(tmpPath, dstPath)
+      resolve(null)
     })
   })
 }
@@ -125,6 +126,8 @@ const queue = new Queue(async (t, cb) => {
   const [z, x, y] = t
   await extract(z, x, y)
   await produce(z, x, y)
+  winston.info(
+    `${iso()}: ${z}-${x}-${y} took ${pretty(new Date() - startTime)}`)
   return cb(null)
 }, { concurrent: config.get('concurrent') })
 
