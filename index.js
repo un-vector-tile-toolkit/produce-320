@@ -73,7 +73,7 @@ const produce = (z, x, y) => {
     const dstPath = `${mbtilesDirPath}/${z}-${x}-${y}.mbtiles`
 
     if (fs.existsSync(dstPath)) {
-      winston.info(`${iso()}: ${dstPath} aready there.`)
+      winston.info(`${iso()}: ${dstPath} already there.`)
       resolve(null)
     }
 
