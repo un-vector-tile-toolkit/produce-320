@@ -127,7 +127,7 @@ const queue = new Queue(async (t, cb) => {
   await extract(z, x, y)
   await produce(z, x, y)
   winston.info(
-    `${iso()}: ${z}-${x}-${y} took ${pretty(new Date() - startTime)}`)
+    `${iso()}: ${z}-${x}-${y} took ${TimeFormat.fromMs(new Date() - startTime)}`)
   return cb(null)
 }, { concurrent: config.get('concurrent') })
 
