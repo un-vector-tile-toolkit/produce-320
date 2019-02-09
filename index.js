@@ -39,29 +39,29 @@ const extract = (z, x, y) => {
     if (fs.existsSync(dstPath)) {
       winston.info(`${iso()}: ${dstPath} is already there.`)
       resolve(null)
-    }
+    } else {
+      const extractConfig = {
+        extracts: [{
+          output: path.basename(tmpPath),
+          output_format: 'pbf',
+          bbox: bbox
+        }],
+        directory: path.dirname(tmpPath)
+      }
+      fs.writeFileSync(extractConfigPath, JSON.stringify(extractConfig))
+      winston.info(`${iso()}: ${z}-${x}-${y} osmium extract started`)
 
-    const extractConfig = {
-      extracts: [{
-        output: path.basename(tmpPath),
-        output_format: 'pbf',
-        bbox: bbox
-      }],
-      directory: path.dirname(tmpPath)
+      const osmium = spawn('osmium', [
+        'extract', '--config', extractConfigPath,
+        '--strategy=smart', '--overwrite', '--no-progress',
+        planetPath], { stdio: 'inherit' })
+      osmium.on('close', () => { 
+        fs.renameSync(tmpPath, dstPath)
+        fs.unlinkSync(extractConfigPath)
+        winston.info(`${iso()}: ${z}-${x}-${y} osmium extract finished`)
+        resolve(null)
+      })
     }
-    fs.writeFileSync(extractConfigPath, JSON.stringify(extractConfig))
-    winston.info(`${iso()}: ${z}-${x}-${y} osmium extract started`)
-
-    const osmium = spawn('osmium', [
-      'extract', '--config', extractConfigPath,
-      '--strategy=smart', '--overwrite', '--no-progress',
-      planetPath], { stdio: 'inherit' })
-    osmium.on('close', () => { 
-      fs.renameSync(tmpPath, dstPath)
-      fs.unlinkSync(extractConfigPath)
-      winston.info(`${iso()}: ${z}-${x}-${y} osmium extract finished`)
-      resolve(null)
-    })
   })
 }
 
@@ -83,7 +83,7 @@ const produce = (z, x, y) => {
       '--minimum-zoom=6', '--maximum-zoom=15', '--base-zoom=15',
       `--clip-bounding-box=${bbox.join(',')}`,
       `--output=${tmpPath}` ],
-      { stdio: ['pipe', 'inherit', 'inherit'] })
+      { stdio: ['pipe', 'ignore', 'ignore'] })
 
     let pausing = false
     const jsonTextSequenceParser = new Parser()
