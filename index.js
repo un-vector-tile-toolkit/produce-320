@@ -115,7 +115,7 @@ const produce = (z, x, y) => {
     osmium.stdout.pipe(jsonTextSequenceParser)
 
     tippecanoe.on('close', () => {
-      fs.rename(tmpPath, dstPath)
+      fs.renameSync(tmpPath, dstPath)
       resolve(null)
     })
   })
