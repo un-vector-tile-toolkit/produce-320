@@ -5,7 +5,7 @@
   maxx: 41
   maxy: 39
   exportConfigPath: ../tapioca/osmium-export-config.json
-  planetPath: ../welt/320.osm.pbf
+  planetPath: ../welt/planet-190128.osm.pbf
   modifyPath: ../tapioca/modify.js
   pbfDirPath: pbf
   mbtilesDirPath: mbtiles

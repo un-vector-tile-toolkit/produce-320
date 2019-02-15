@@ -5,6 +5,7 @@ produce 320 modules in pipelines (extract-320 + tapioca)
 ```config
 git clone git@github.com:hfu/produce-320
 git clone git@github.com:hfu/tapioca
+git clone git@github.com:hfu/nfm
 cd produce-320
 npm install
 ```

@@ -10,6 +10,7 @@ const modify = require(config.get('modifyPath'))
 const winston = require('winston')
 const tempy = require('tempy')
 const Parser = require('json-text-sequence').parser
+const nfm = require('../nfm')
 
 winston.configure({
   transports: [new winston.transports.Console()]
@@ -49,7 +50,7 @@ const extract = (z, x, y) => {
         directory: path.dirname(tmpPath)
       }
       fs.writeFileSync(extractConfigPath, JSON.stringify(extractConfig))
-      winston.info(`${iso()}: ${z}-${x}-${y} osmium extract started`)
+      // winston.info(`${iso()}: ${z}-${x}-${y} osmium extract started`)
 
       const osmium = spawn('osmium', [
         'extract', '--config', extractConfigPath,
@@ -58,7 +59,7 @@ const extract = (z, x, y) => {
       osmium.on('close', () => { 
         fs.renameSync(tmpPath, dstPath)
         fs.unlinkSync(extractConfigPath)
-        winston.info(`${iso()}: ${z}-${x}-${y} osmium extract finished`)
+        // winston.info(`${iso()}: ${z}-${x}-${y} osmium extract finished`)
         resolve(null)
       })
     }
@@ -75,13 +76,14 @@ const produce = (z, x, y) => {
     if (fs.existsSync(dstPath)) {
       winston.info(`${iso()}: ${dstPath} already there.`)
       resolve(null)
+      return
     }
 
     const tippecanoe = spawn('tippecanoe', [
       '--no-feature-limit', '--no-tile-size-limit',
       '--force', '--simplification=2',
       '--minimum-zoom=6', '--maximum-zoom=15', '--base-zoom=15',
-      `--clip-bounding-box=${bbox.join(',')}`,
+      `--clip-bounding-box=${bbox.join(',')}`, '--hilbert',
       `--output=${tmpPath}` ],
       { stdio: ['pipe', 'ignore', 'ignore'] })
 
@@ -124,10 +126,14 @@ const produce = (z, x, y) => {
 const queue = new Queue(async (t, cb) => {
   const startTime = new Date()
   const [z, x, y] = t
-  await extract(z, x, y)
-  await produce(z, x, y)
-  winston.info(
-    `${iso()}: ${z}-${x}-${y} took ${TimeFormat.fromMs(new Date() - startTime)}`)
+  if (nfm(z, x, y)) {
+    winston.info(`${iso()}: ${z}-${x}-${y} is no-feature-module.`)
+  } else {
+    await extract(z, x, y)
+    await produce(z, x, y)
+    const time = TimeFormat.fromMs(new Date() - startTime)
+    winston.info(`${iso()}: ${z}-${x}-${y} took ${time}`)
+  }
   return cb(null)
 }, { concurrent: config.get('concurrent') })
 
