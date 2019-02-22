@@ -11,6 +11,7 @@ const winston = require('winston')
 const tempy = require('tempy')
 const Parser = require('json-text-sequence').parser
 const nfm = require('../nfm')
+const m16 = require('../m16')
 
 winston.configure({
   transports: [new winston.transports.Console()]
@@ -22,7 +23,7 @@ const minx = config.get('minx')
 const miny = config.get('miny')
 const maxx = config.get('maxx')
 const maxy = config.get('maxy')
-const planetPath = config.get('planetPath')
+// const planetPath = config.get('planetPath')
 const exportConfigPath = config.get('exportConfigPath')
 const pbfDirPath = config.get('pbfDirPath')
 const mbtilesDirPath = config.get('mbtilesDirPath')
@@ -52,11 +53,12 @@ const extract = (z, x, y) => {
       fs.writeFileSync(extractConfigPath, JSON.stringify(extractConfig))
       // winston.info(`${iso()}: ${z}-${x}-${y} osmium extract started`)
 
+      const planetPath = m16(z, x, y)
       const osmium = spawn('osmium', [
         'extract', '--config', extractConfigPath,
         '--strategy=smart', '--overwrite', '--no-progress',
         planetPath], { stdio: 'inherit' })
-      osmium.on('close', () => { 
+      osmium.on('close', () => {
         fs.renameSync(tmpPath, dstPath)
         fs.unlinkSync(extractConfigPath)
         // winston.info(`${iso()}: ${z}-${x}-${y} osmium extract finished`)
@@ -85,35 +87,35 @@ const produce = (z, x, y) => {
       '--minimum-zoom=6', '--maximum-zoom=15', '--base-zoom=15',
       `--clip-bounding-box=${bbox.join(',')}`, '--hilbert',
       `--output=${tmpPath}` ],
-      { stdio: ['pipe', 'ignore', 'ignore'] })
+    { stdio: ['pipe', 'ignore', 'ignore'] })
 
     let pausing = false
     const jsonTextSequenceParser = new Parser()
-    .on('data', (json) => {
-      f = modify(json)
-      if (f) {
-        if (tippecanoe.stdin.write(JSON.stringify(f))) {
-        } else {
-          osmium.stdout.pause()
-          if (!pausing) {
-            tippecanoe.stdin.once('drain', () => {
-              osmium.stdout.resume()
-              pausing = false
-            })
-            pausing = true
+      .on('data', (json) => {
+        f = modify(json)
+        if (f) {
+          if (tippecanoe.stdin.write(JSON.stringify(f))) {
+          } else {
+            osmium.stdout.pause()
+            if (!pausing) {
+              tippecanoe.stdin.once('drain', () => {
+                osmium.stdout.resume()
+                pausing = false
+              })
+              pausing = true
+            }
           }
         }
-      }
-    })
-    .on('finish', () => {
-      tippecanoe.stdin.end()
-    })
+      })
+      .on('finish', () => {
+        tippecanoe.stdin.end()
+      })
 
     const osmium = spawn('osmium', [
       'export', '--index-type=sparse_file_array',
-      `--config=${exportConfigPath}`, '--output-format=geojsonseq', 
+      `--config=${exportConfigPath}`, '--output-format=geojsonseq',
       '--output=-', srcPath ],
-      { stdio: ['inherit', 'pipe', 'inherit'] })
+    { stdio: ['inherit', 'pipe', 'inherit'] })
     osmium.stdout.pipe(jsonTextSequenceParser)
 
     tippecanoe.on('close', () => {
@@ -127,7 +129,7 @@ const queue = new Queue(async (t, cb) => {
   const startTime = new Date()
   const [z, x, y] = t
   if (nfm(z, x, y)) {
-    winston.info(`${iso()}: ${z}-${x}-${y} is no-feature-module.`)
+    winston.info(`${iso()}: ${z}-${x}-${y} is a no-feature-module.`)
   } else {
     await extract(z, x, y)
     await produce(z, x, y)
