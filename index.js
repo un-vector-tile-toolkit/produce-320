@@ -1,6 +1,6 @@
 const config = require('config')
 const Queue = require('better-queue')
-const { spawn, spawnSync } = require('child_process')
+const { spawn } = require('child_process')
 const tilebelt = require('@mapbox/tilebelt')
 const fs = require('fs')
 const path = require('path')
@@ -56,7 +56,7 @@ const extract = (z, x, y) => {
       const osmium = spawn('osmium', [
         'extract', '--config', extractConfigPath,
         '--strategy=smart', '--overwrite', '--no-progress',
-        planetPath], { stdio: 'inherit' })
+        miniPlanetPath], { stdio: 'inherit' })
       osmium.on('close', () => {
         fs.renameSync(tmpPath, dstPath)
         fs.unlinkSync(extractConfigPath)
@@ -167,15 +167,13 @@ const prepareMiniPlanet = () => {
       '--strategy=smart', '--overwrite', '--progress',
       '--verbose',
       '--output-format=pbf,pbf_compression=false,add_metadata=false',
-      `--output=${miniPlanetPath}`,planetPath
-    ], { stdio: 'inherit' })
-    .on('exit', code => {
+      `--output=${miniPlanetPath}`, planetPath
+    ], { stdio: 'inherit' }).on('exit', code => {
       if (code === 0) {
-        process.exit() /////////
         resolve(null)
       } else {
         deleteMiniPlanet()
-        reject(`prepareMiniPlanet failed.`)
+        reject(new Error(`prepareMiniPlanet failed.`))
       }
     })
   })
@@ -187,7 +185,6 @@ const deleteMiniPlanet = () => {
     winston.info(`${iso()}: deleted ${miniPlanetPath}`)
   })
 }
-
 
 const main = async () => {
   await prepareMiniPlanet()
