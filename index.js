@@ -154,7 +154,7 @@ queue.on('task_finish', (taskId, result, stats) => {
   }
 })
 
-const prepareMiniPlanet = () => {
+const createMiniPlanet = () => {
   return new Promise((resolve, reject) => {
     const lowerCorner = tilebelt.tileToBBOX([minx, maxy, z])
     const upperCorner = tilebelt.tileToBBOX([maxx, miny, z])
@@ -173,7 +173,7 @@ const prepareMiniPlanet = () => {
         resolve(null)
       } else {
         deleteMiniPlanet()
-        reject(new Error(`prepareMiniPlanet failed.`))
+        reject(new Error(`createMiniPlanet failed.`))
       }
     })
   })
@@ -187,7 +187,9 @@ const deleteMiniPlanet = () => {
 }
 
 const main = async () => {
-  await prepareMiniPlanet()
+  if (!fs.existsSync(miniPlanetPath)) {
+    await createMiniPlanet()
+  }
   for (let x = minx; x <= maxx; x++) {
     for (let y = miny; y <= maxy; y++) {
       queue.push([z, x, y])
