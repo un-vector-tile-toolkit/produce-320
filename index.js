@@ -1,17 +1,16 @@
 const config = require('config')
 const Queue = require('better-queue')
-const { spawnSync, spawn } = require('child_process')
+const { spawn, spawnSync } = require('child_process')
 const tilebelt = require('@mapbox/tilebelt')
 const fs = require('fs')
 const path = require('path')
 const TimeFormat = require('hh-mm-ss')
-const pretty = require('prettysize')
+// const pretty = require('prettysize')
 const modify = require(config.get('modifyPath'))
 const winston = require('winston')
 const tempy = require('tempy')
 const Parser = require('json-text-sequence').parser
 const nfm = require('../nfm')
-const m16 = require('../m16')
 
 winston.configure({
   transports: [new winston.transports.Console()]
@@ -23,10 +22,11 @@ const minx = config.get('minx')
 const miny = config.get('miny')
 const maxx = config.get('maxx')
 const maxy = config.get('maxy')
-// const planetPath = config.get('planetPath')
 const exportConfigPath = config.get('exportConfigPath')
 const pbfDirPath = config.get('pbfDirPath')
 const mbtilesDirPath = config.get('mbtilesDirPath')
+const planetPath = config.get('planetPath')
+const miniPlanetPath = config.get('miniPlanetPath')
 
 const iso = () => {
   return new Date().toISOString()
@@ -53,7 +53,6 @@ const extract = (z, x, y) => {
       fs.writeFileSync(extractConfigPath, JSON.stringify(extractConfig))
       // winston.info(`${iso()}: ${z}-${x}-${y} osmium extract started`)
 
-      const planetPath = m16(z, x, y)
       const osmium = spawn('osmium', [
         'extract', '--config', extractConfigPath,
         '--strategy=smart', '--overwrite', '--no-progress',
@@ -92,7 +91,7 @@ const produce = (z, x, y) => {
     let pausing = false
     const jsonTextSequenceParser = new Parser()
       .on('data', (json) => {
-        f = modify(json)
+        let f = modify(json)
         if (f) {
           if (tippecanoe.stdin.write(JSON.stringify(f))) {
           } else {
@@ -143,8 +142,60 @@ queue.on('task_failed', (taskId, err, stats) => {
   winston.error(err.stack)
 })
 
-for (let x = minx; x <= maxx; x++) {
-  for (let y = miny; y <= maxy; y++) {
-    queue.push([z, x, y])
+let queueEmpty = false
+
+queue.on('empty', () => {
+  queueEmpty = true
+})
+
+queue.on('task_finish', (taskId, result, stats) => {
+  if (queueEmpty) {
+    deleteMiniPlanet()
+  }
+})
+
+const prepareMiniPlanet = () => {
+  return new Promise((resolve, reject) => {
+    const lowerCorner = tilebelt.tileToBBOX([minx, maxy, z])
+    const upperCorner = tilebelt.tileToBBOX([maxx, miny, z])
+    const bbox = [
+      lowerCorner[0], lowerCorner[1],
+      upperCorner[2], upperCorner[3]
+    ]
+    spawn('osmium', [
+      'extract', `--bbox=${bbox.join(',')}`,
+      '--strategy=smart', '--overwrite', '--progress',
+      '--verbose',
+      '--output-format=pbf,pbf_compression=false,add_metadata=false',
+      `--output=${miniPlanetPath}`,planetPath
+    ], { stdio: 'inherit' })
+    .on('exit', code => {
+      if (code === 0) {
+        process.exit() /////////
+        resolve(null)
+      } else {
+        deleteMiniPlanet()
+        reject(`prepareMiniPlanet failed.`)
+      }
+    })
+  })
+}
+
+const deleteMiniPlanet = () => {
+  fs.unlink(miniPlanetPath, (err) => {
+    if (err) throw err
+    winston.info(`${iso()}: deleted ${miniPlanetPath}`)
+  })
+}
+
+
+const main = async () => {
+  await prepareMiniPlanet()
+  for (let x = minx; x <= maxx; x++) {
+    for (let y = miny; y <= maxy; y++) {
+      queue.push([z, x, y])
+    }
   }
 }
+
+main()

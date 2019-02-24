@@ -9,5 +9,6 @@
   pbfDirPath: pbf
   mbtilesDirPath: mbtiles
   concurrent: 2
-  src: ../welt/planet-190218.osm.pbf
+  planetPath: ../welt/planet-190218.osm.pbf
+  miniPlanetPath: miniplanet.osm.pbf
 }
