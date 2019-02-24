@@ -1,12 +1,13 @@
 {
   z: 6
-  minx: 38
-  miny: 31
-  maxx: 38
-  maxy: 32
+  minx: 28
+  miny: 24
+  maxx: 41
+  maxy: 39
   exportConfigPath: ../tapioca/osmium-export-config.json
   modifyPath: ../tapioca/modify.js
   pbfDirPath: pbf
   mbtilesDirPath: mbtiles
   concurrent: 2
+  src: ../welt/planet-190218.osm.pbf
 }
