@@ -1,9 +1,9 @@
 {
   z: 6
-  minx: 36
-  miny: 24
-  maxx: 41
-  maxy: 39
+  minx: 33
+  miny: 22
+  maxx: 35
+  maxy: 23
   exportConfigPath: ../tapioca/osmium-export-config.json
   modifyPath: ../tapioca/modify.js
   pbfDirPath: pbf
