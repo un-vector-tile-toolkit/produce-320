@@ -26,7 +26,7 @@ const exportConfigPath = config.get('exportConfigPath')
 const pbfDirPath = config.get('pbfDirPath')
 const mbtilesDirPath = config.get('mbtilesDirPath')
 const planetPath = config.get('planetPath')
-const miniPlanetPath = config.get('miniPlanetPath')
+const miniPlanetPath = tempy.file({ extention: 'osm.pbf' })
 
 const iso = () => {
   return new Date().toISOString()
