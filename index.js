@@ -97,7 +97,6 @@ const produce = (z, x, y) => {
       .on('data', (json) => {
         let f = modify(json)
         if (f) {
-console.log(JSON.stringify(f))
           if (tippecanoe.stdin.write(JSON.stringify(f))) {
           } else {
             osmium.stdout.pause()
