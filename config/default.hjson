@@ -10,5 +10,6 @@
   mbtilesDirPath: mbtiles
   concurrent: 2
   planetPath: ../welt/planet-190218.osm.pbf
-  miniPlanetPath: miniplanet.osm.pbf
+  skipExistingPbf: false
+  skipExistingMbtiles: false
 }

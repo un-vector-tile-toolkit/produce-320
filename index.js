@@ -27,6 +27,8 @@ const pbfDirPath = config.get('pbfDirPath')
 const mbtilesDirPath = config.get('mbtilesDirPath')
 const planetPath = config.get('planetPath')
 const miniPlanetPath = tempy.file({ extension: 'osm.pbf' })
+const skipExistingPbf = config.get('skipExistingPbf')
+const skipExistingMbtiles = config.get('skipExistingMbtiles')
 
 const iso = () => {
   return new Date().toISOString()
@@ -38,7 +40,7 @@ const extract = (z, x, y) => {
     const extractConfigPath = tempy.file({ extension: 'json' })
     const tmpPath = `${pbfDirPath}/part-${z}-${x}-${y}.osm.pbf`
     const dstPath = `${pbfDirPath}/${z}-${x}-${y}.osm.pbf`
-    if (fs.existsSync(dstPath)) {
+    if (skipExistingPbf && fs.existsSync(dstPath)) {
       winston.info(`${iso()}: ${dstPath} is already there.`)
       resolve(null)
     } else {
@@ -55,7 +57,7 @@ const extract = (z, x, y) => {
 
       const osmium = spawn('osmium', [
         'extract', '--config', extractConfigPath,
-        '--strategy=smart', '--overwrite', '--no-progress',
+        '--strategy=smart', '--overwrite', '--progress', '--verbose',
         miniPlanetPath], { stdio: 'inherit' })
       osmium.on('close', () => {
         fs.renameSync(tmpPath, dstPath)
@@ -74,7 +76,7 @@ const produce = (z, x, y) => {
     const tmpPath = `${mbtilesDirPath}/part-${z}-${x}-${y}.mbtiles`
     const dstPath = `${mbtilesDirPath}/${z}-${x}-${y}.mbtiles`
 
-    if (fs.existsSync(dstPath)) {
+    if (skipExistingMbtiles && fs.existsSync(dstPath)) {
       winston.info(`${iso()}: ${dstPath} already there.`)
       resolve(null)
       return
@@ -86,7 +88,7 @@ const produce = (z, x, y) => {
       '--minimum-zoom=6', '--maximum-zoom=15', '--base-zoom=15',
       `--clip-bounding-box=${bbox.join(',')}`, '--hilbert',
       `--output=${tmpPath}` ],
-    { stdio: ['pipe', 'ignore', 'ignore'] })
+    { stdio: ['pipe', 'inherit', 'inherit'] })
 
     let pausing = false
     const jsonTextSequenceParser = new Parser()
@@ -111,7 +113,7 @@ const produce = (z, x, y) => {
       })
 
     const osmium = spawn('osmium', [
-      'export', '--index-type=sparse_file_array',
+      'export', '--index-type=sparse_file_array', '--verbose',
       `--config=${exportConfigPath}`, '--output-format=geojsonseq',
       '--output=-', srcPath ],
     { stdio: ['inherit', 'pipe', 'inherit'] })
