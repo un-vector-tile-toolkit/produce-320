@@ -27,6 +27,7 @@ const pbfDirPath = config.get('pbfDirPath')
 const mbtilesDirPath = config.get('mbtilesDirPath')
 const planetPath = config.get('planetPath')
 const miniPlanetPath = tempy.file({ extension: 'osm.pbf' })
+const skipMiniPlanet = config.get('skipMiniPlanet')
 const skipExistingPbf = config.get('skipExistingPbf')
 const skipExistingMbtiles = config.get('skipExistingMbtiles')
 
@@ -57,8 +58,9 @@ const extract = (z, x, y) => {
 
       const osmium = spawn('osmium', [
         'extract', '--config', extractConfigPath,
-        '--strategy=smart', '--overwrite', '--progress', '--verbose',
-        miniPlanetPath], { stdio: 'inherit' })
+        '--strategy=smart', '--overwrite', '--no-progress',
+        skipMiniPlanet ? planetPath : miniPlanetPath
+      ], { stdio: 'inherit' })
       osmium.on('close', () => {
         fs.renameSync(tmpPath, dstPath)
         fs.unlinkSync(extractConfigPath)
@@ -95,6 +97,7 @@ const produce = (z, x, y) => {
       .on('data', (json) => {
         let f = modify(json)
         if (f) {
+console.log(JSON.stringify(f))
           if (tippecanoe.stdin.write(JSON.stringify(f))) {
           } else {
             osmium.stdout.pause()
@@ -113,7 +116,7 @@ const produce = (z, x, y) => {
       })
 
     const osmium = spawn('osmium', [
-      'export', '--index-type=sparse_file_array', '--verbose',
+      'export', '--index-type=sparse_file_array',
       `--config=${exportConfigPath}`, '--output-format=geojsonseq',
       '--output=-', srcPath ],
     { stdio: ['inherit', 'pipe', 'inherit'] })
@@ -132,7 +135,7 @@ const queue = new Queue(async (t, cb) => {
   if (nfm(z, x, y)) {
     winston.info(`${iso()}: ${z}-${x}-${y} is a no-feature-module.`)
   } else {
-    await extract(z, x, y)
+    if (!skipMiniPlanet) await extract(z, x, y)
     await produce(z, x, y)
     const time = TimeFormat.fromMs(new Date() - startTime)
     winston.info(`${iso()}: ${z}-${x}-${y} took ${time}`)
@@ -152,7 +155,7 @@ queue.on('empty', () => {
 
 queue.on('task_finish', (taskId, result, stats) => {
   if (queueEmpty) {
-    deleteMiniPlanet()
+    if (!skipMiniPlanet) deleteMiniPlanet()
   }
 })
 
@@ -166,8 +169,7 @@ const createMiniPlanet = () => {
     ]
     spawn('osmium', [
       'extract', `--bbox=${bbox.join(',')}`,
-      '--strategy=smart', '--overwrite', '--progress',
-      '--verbose',
+      '--strategy=smart', '--overwrite', '--progress', '--verbose',
       '--output-format=pbf,pbf_compression=false,add_metadata=false',
       `--output=${miniPlanetPath}`, planetPath
     ], { stdio: 'inherit' }).on('exit', code => {
@@ -189,9 +191,7 @@ const deleteMiniPlanet = () => {
 }
 
 const main = async () => {
-  if (!fs.existsSync(miniPlanetPath)) {
-    await createMiniPlanet()
-  }
+  if (!skipMiniPlanet) { await createMiniPlanet() }
   for (let x = minx; x <= maxx; x++) {
     for (let y = miny; y <= maxy; y++) {
       queue.push([z, x, y])

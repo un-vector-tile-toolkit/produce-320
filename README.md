@@ -16,3 +16,7 @@ You need osmium-tools and tippecanoe installed in your system.
 vi config/defautl.hjson
 node index.js
 ```
+
+# about the name
+This project is called 320 because it is originally started as a production process to produce 320 modules covering African area.
+
