@@ -90,7 +90,7 @@ const produce = (z, x, y) => {
       '--minimum-zoom=6', '--maximum-zoom=15', '--base-zoom=15',
       `--clip-bounding-box=${bbox.join(',')}`, '--hilbert',
       `--output=${tmpPath}` ],
-    { stdio: ['pipe', 'inherit', 'inherit'] })
+    { stdio: ['pipe', 'ignore', 'ignore'] })
 
     let pausing = false
     const jsonTextSequenceParser = new Parser()
@@ -134,8 +134,12 @@ const queue = new Queue(async (t, cb) => {
   if (nfm(z, x, y)) {
     winston.info(`${iso()}: ${z}-${x}-${y} is a no-feature-module.`)
   } else {
-    if (!skipMiniPlanet) await extract(z, x, y)
-    await produce(z, x, y)
+    try {
+      if (!skipMiniPlanet) await extract(z, x, y)
+      await produce(z, x, y)
+    } catch (err) {
+      winston.error(`${iso()}: ${error.stack} (${z}-${x}-${y})`)
+    }
     const time = TimeFormat.fromMs(new Date() - startTime)
     winston.info(`${iso()}: ${z}-${x}-${y} took ${time}`)
   }
