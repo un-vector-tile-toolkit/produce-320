@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/hfu/produce-320#readme",
   "dependencies": {
+    "@mapbox/geojson-area": "^0.2.2",
     "@mapbox/tilebelt": "^1.0.1",
     "better-queue": "^3.8.10",
     "config": "^3.0.1",

@@ -10,7 +10,7 @@ const modify = require(config.get('modifyPath'))
 const winston = require('winston')
 const tempy = require('tempy')
 const Parser = require('json-text-sequence').parser
-const nfm = require('../nfm')
+const nfm = require('./nfm')
 
 winston.configure({
   transports: [new winston.transports.Console()]
@@ -95,7 +95,13 @@ const produce = (z, x, y) => {
     let pausing = false
     const jsonTextSequenceParser = new Parser()
       .on('data', (json) => {
-        let f = modify(json)
+        let f
+        try {
+          f = modify(json)
+        } catch (e) {
+          winston.error(`${iso()}: ${e.stack}`)
+          f = null
+        }
         if (f) {
           if (tippecanoe.stdin.write(JSON.stringify(f))) {
           } else {

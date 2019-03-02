@@ -1,15 +1,15 @@
 {
   z: 6
-  minx: 55
-  miny: 25
-  maxx: 56
-  maxy: 25
-  exportConfigPath: ../tapioca/osmium-export-config.json
-  modifyPath: ../tapioca/modify.js
+  minx: 32
+  miny: 24
+  maxx: 32
+  maxy: 24
+  exportConfigPath: ./osmium-export-config.json
+  modifyPath: ./modify.js
   pbfDirPath: pbf
   mbtilesDirPath: mbtiles
   concurrent: 2
-  planetPath: ../welt/planet-190218.osm.pbf
+  planetPath: ../welt/planet-190225.osm.pbf
   skipMiniPlanet: true
   skipExistingPbf: true
   skipExistingMbtiles: false
