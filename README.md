@@ -13,6 +13,8 @@ You need osmium-tools and tippecanoe installed in your system.
 
 # run
 ```config
+mkdir pbf
+mkdir mbtiles
 vi config/defautl.hjson
 node index.js
 ```
