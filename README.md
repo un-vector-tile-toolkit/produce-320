@@ -1,18 +1,18 @@
 # produce-320
-produce 320 modules in pipelines (extract-320 + tapioca)
+A quick vector tile production from planet.osm.pbf. This tool is designed to produce global vector tiles around within 5 days.
 
 # install
+You need the latest versions of osmium-tool and Tippecanoe installed in your system. After that, you need to install the tool as below.
 ```config
 git clone git@github.com:hfu/produce-320
-git clone git@github.com:hfu/tapioca
-git clone git@github.com:hfu/nfm
 cd produce-320
 npm install
 ```
-You need osmium-tools and tippecanoe installed in your system.
 
 # run
 ```config
+mkdir pbf
+mkdir mbtiles
 vi config/defautl.hjson
 node index.js
 ```
