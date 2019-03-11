@@ -143,6 +143,7 @@ const produce = (z, x, y) => {
       fs.renameSync(tmpPath, dstPath)
       const endTime = new Date()
       const time = TimeFormat.fromMs(endTime - startTime)
+      const mbtilesSize = fs.statSync(dstPath).size
       winston.info(`${iso()}: ${z}-${x}-${y} took ${time}`, {
         z: z,
         x: x,
@@ -151,7 +152,8 @@ const produce = (z, x, y) => {
         endTime: iso(),
         exitStatus: 'mbtiles created',
         productionSeconds: (endTime - startTime) / 1000,
-        mbtilesSize: fs.statSync(dstPath).size
+        mbtilesSize: mbtilesSize
+        bytesPerMilliseconds: mbtilesSize / (endTime - startTime)
       })
       resolve(null)
     })
