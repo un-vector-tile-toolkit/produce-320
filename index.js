@@ -150,7 +150,7 @@ const produce = (z, x, y) => {
         startTime: startTime,
         endTime: iso(),
         exitStatus: 'mbtiles created',
-        productionSeconds: (endTime - startTime) / 1000
+        productionSeconds: (endTime - startTime) / 1000,
         mbtilesSize: fs.statSync(dstPath).size
       })
       resolve(null)
@@ -165,7 +165,7 @@ const queue = new Queue(async (t, cb) => {
     winston.info(`${iso()}: ${z}-${x}-${y} is a no-feature-module.`, {
       z: z,
       x: x,
-      y: y
+      y: y,
       startTime: startTime,
       endTime: endTime,
       exitState: 'no features'
@@ -177,7 +177,6 @@ const queue = new Queue(async (t, cb) => {
     } catch (err) {
       winston.error(`${iso()}: ${error.stack} (${z}-${x}-${y})`)
     }
-   })
   }
   return cb(null)
 }, { concurrent: config.get('concurrent') })
