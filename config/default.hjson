@@ -1,9 +1,9 @@
 {
   z: 6
-  minx: 55
-  miny: 25
-  maxx: 56
-  maxy: 25
+  minx: 33
+  miny: 22
+  maxx: 33
+  maxy: 22
   exportConfigPath: ./osmium-export-config.json
   modifyPath: ./modify.js
   pbfDirPath: pbf

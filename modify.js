@@ -89,6 +89,9 @@ const nature = (f) => {
       maxzoom: 15,
       layer: 'nature'
     }
+    if (f.tippecanoe.minzoom < 10) {
+      f.tippecanoe.minzoom == 0
+    }
     return f
   }
   return null
@@ -233,7 +236,7 @@ const road = (f) => {
       case 'motorway_link':
         return 9
       case 'motorway':
-        return 6
+        return 8
       default:
         return 15
     }
