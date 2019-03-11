@@ -1,16 +1,16 @@
 {
   z: 6
-  minx: 33
-  miny: 22
-  maxx: 33
-  maxy: 22
+  minx: 55
+  miny: 25
+  maxx: 56
+  maxy: 25
   exportConfigPath: ./osmium-export-config.json
   modifyPath: ./modify.js
   pbfDirPath: pbf
   mbtilesDirPath: mbtiles
   concurrent: 2
-  planetPath: ../welt/planet-190225.osm.pbf
-  skipMiniPlanet: true
-  skipExistingPbf: true
+  planetPath: ../welt/planet-190304.osm.pbf
+  skipMiniPlanet: false
+  skipExistingPbf: false
   skipExistingMbtiles: false
 }
