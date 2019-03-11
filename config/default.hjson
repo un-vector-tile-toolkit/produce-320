@@ -12,5 +12,5 @@
   planetPath: ../welt/planet-190225.osm.pbf
   skipMiniPlanet: true
   skipExistingPbf: true
-  skipExistingMbtiles: false
+  skipExistingMbtiles: true
 }
