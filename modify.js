@@ -89,8 +89,8 @@ const nature = (f) => {
       maxzoom: 15,
       layer: 'nature'
     }
-    if (f.tippecanoe.minzoom < 10) {
-      f.tippecanoe.minzoom == 0
+    if (f.tippecanoe.minzoom < 11) {
+      f.tippecanoe.minzoom = 11
     }
     return f
   }
