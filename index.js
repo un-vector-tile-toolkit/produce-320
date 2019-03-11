@@ -5,7 +5,6 @@ const tilebelt = require('@mapbox/tilebelt')
 const fs = require('fs')
 const path = require('path')
 const TimeFormat = require('hh-mm-ss')
-// const pretty = require('prettysize')
 const modify = require(config.get('modifyPath'))
 const winston = require('winston')
 const tempy = require('tempy')
@@ -37,12 +36,20 @@ const iso = () => {
 
 const extract = (z, x, y) => {
   return new Promise((resolve, reject) => {
+    const startTime = iso()
     const bbox = tilebelt.tileToBBOX([x, y, z])
     const extractConfigPath = tempy.file({ extension: 'json' })
     const tmpPath = `${pbfDirPath}/part-${z}-${x}-${y}.osm.pbf`
     const dstPath = `${pbfDirPath}/${z}-${x}-${y}.osm.pbf`
     if (skipExistingPbf && fs.existsSync(dstPath)) {
-      winston.info(`${iso()}: ${dstPath} is already there.`)
+      winston.info(`${iso()}: ${dstPath} is already there.`, {
+        z: z,
+        x: x,
+        y: y,
+        startTime: startTime,
+        endTime: iso(),
+        exitState: 'pbf exists'
+      })
       resolve(null)
     } else {
       const extractConfig = {
@@ -54,8 +61,6 @@ const extract = (z, x, y) => {
         directory: path.dirname(tmpPath)
       }
       fs.writeFileSync(extractConfigPath, JSON.stringify(extractConfig))
-      // winston.info(`${iso()}: ${z}-${x}-${y} osmium extract started`)
-
       const osmium = spawn('osmium', [
         'extract', '--config', extractConfigPath,
         '--strategy=smart', '--overwrite', '--no-progress',
@@ -64,7 +69,6 @@ const extract = (z, x, y) => {
       osmium.on('close', () => {
         fs.renameSync(tmpPath, dstPath)
         fs.unlinkSync(extractConfigPath)
-        // winston.info(`${iso()}: ${z}-${x}-${y} osmium extract finished`)
         resolve(null)
       })
     }
@@ -73,13 +77,21 @@ const extract = (z, x, y) => {
 
 const produce = (z, x, y) => {
   return new Promise((resolve, reject) => {
+    const startTime = new Date()
     const bbox = tilebelt.tileToBBOX([x, y, z])
     const srcPath = `${pbfDirPath}/${z}-${x}-${y}.osm.pbf`
     const tmpPath = `${mbtilesDirPath}/part-${z}-${x}-${y}.mbtiles`
     const dstPath = `${mbtilesDirPath}/${z}-${x}-${y}.mbtiles`
 
     if (skipExistingMbtiles && fs.existsSync(dstPath)) {
-      winston.info(`${iso()}: ${dstPath} already there.`)
+      winston.info(`${iso()}: ${dstPath} already there.`, {
+        z: z,
+        x: x,
+        y: y,
+        startTime: startTime,
+        endTime: iso(),
+        exitState: 'mbtiles exists'
+      })
       resolve(null)
       return
     }
@@ -129,6 +141,18 @@ const produce = (z, x, y) => {
 
     tippecanoe.on('close', () => {
       fs.renameSync(tmpPath, dstPath)
+      const endTime = new Date()
+      const time = TimeFormat.fromMs(endTime - startTime)
+      winston.info(`${iso()}: ${z}-${x}-${y} took ${time}`, {
+        z: z,
+        x: x,
+        y: y,
+        startTime: startTime,
+        endTime: iso(),
+        exitStatus: 'mbtiles created',
+        productionSeconds: (endTime - startTime) / 1000
+        mbtilesSize: fs.statSync(dstPath).size
+      })
       resolve(null)
     })
   })
@@ -138,7 +162,14 @@ const queue = new Queue(async (t, cb) => {
   const startTime = new Date()
   const [z, x, y] = t
   if (nfm(z, x, y)) {
-    winston.info(`${iso()}: ${z}-${x}-${y} is a no-feature-module.`)
+    winston.info(`${iso()}: ${z}-${x}-${y} is a no-feature-module.`, {
+      z: z,
+      x: x,
+      y: y
+      startTime: startTime,
+      endTime: endTime,
+      exitState: 'no features'
+    })
   } else {
     try {
       if (!skipMiniPlanet) await extract(z, x, y)
@@ -146,8 +177,7 @@ const queue = new Queue(async (t, cb) => {
     } catch (err) {
       winston.error(`${iso()}: ${error.stack} (${z}-${x}-${y})`)
     }
-    const time = TimeFormat.fromMs(new Date() - startTime)
-    winston.info(`${iso()}: ${z}-${x}-${y} took ${time}`)
+   })
   }
   return cb(null)
 }, { concurrent: config.get('concurrent') })
