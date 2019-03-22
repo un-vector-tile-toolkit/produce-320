@@ -13,7 +13,10 @@ const nfm = require('./nfm')
 const duodecim = require('../duodecim')
 
 winston.configure({
-  transports: [new winston.transports.Console()]
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'produce-320.log' })
+  ]
 })
 
 // configuration constants
@@ -183,7 +186,7 @@ const queue = new Queue(async (t, cb) => {
       x: x,
       y: y,
       startTime: startTime,
-      endTime: endTime,
+      endTime: new Date(),
       exitState: 'no features'
     })
   } else {
