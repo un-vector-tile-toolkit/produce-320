@@ -10,6 +10,7 @@ const winston = require('winston')
 const tempy = require('tempy')
 const Parser = require('json-text-sequence').parser
 const nfm = require('./nfm')
+const decimundus = require('./decimundus.js')
 
 winston.configure({
   transports: [new winston.transports.Console()]
@@ -17,15 +18,28 @@ winston.configure({
 
 // configuration constants
 const z = config.get('z')
-const minx = config.get('minx')
-const miny = config.get('miny')
-const maxx = config.get('maxx')
-const maxy = config.get('maxy')
+
+let minx = config.get('minx')
+let miny = config.get('miny')
+let maxx = config.get('maxx')
+let maxy = config.get('maxy')
+let miniPlanetPath = tempy.file({ extension: 'osm.pbf' })
+
+if (process.argv.length === 3) {
+  const i = parseInt(process.argv[2])
+  if (i >=0 && i <= 9) {
+    [minx, miny, maxx, maxy] = decimundus[i]
+    miniPlanetPath = `miniplanet-${i}.osm.pbf`
+  } else {
+    console.log('There is no ${process.argv[2]}.')
+    process.exit()
+  }
+}
+
 const exportConfigPath = config.get('exportConfigPath')
 const pbfDirPath = config.get('pbfDirPath')
 const mbtilesDirPath = config.get('mbtilesDirPath')
 const planetPath = config.get('planetPath')
-const miniPlanetPath = tempy.file({ extension: 'osm.pbf' })
 const skipMiniPlanet = config.get('skipMiniPlanet')
 const skipExistingPbf = config.get('skipExistingPbf')
 const skipExistingMbtiles = config.get('skipExistingMbtiles')
@@ -152,7 +166,7 @@ const produce = (z, x, y) => {
         endTime: iso(),
         exitStatus: 'mbtiles created',
         productionSeconds: (endTime - startTime) / 1000,
-        mbtilesSize: mbtilesSize
+        mbtilesSize: mbtilesSize,
         bytesPerMilliseconds: mbtilesSize / (endTime - startTime)
       })
       resolve(null)
