@@ -10,7 +10,7 @@ const winston = require('winston')
 const tempy = require('tempy')
 const Parser = require('json-text-sequence').parser
 const nfm = require('./nfm')
-const decimundus = require('./decimundus.js')
+const duodecim = require('../duodecim')
 
 winston.configure({
   transports: [new winston.transports.Console()]
@@ -27,11 +27,11 @@ let miniPlanetPath = tempy.file({ extension: 'osm.pbf' })
 
 if (process.argv.length === 3) {
   const i = parseInt(process.argv[2])
-  if (i >=0 && i <= 9) {
-    [minx, miny, maxx, maxy] = decimundus[i]
+  if (duodecim[i]) {
+    [minx, miny, maxx, maxy] = duodecim[i]
     miniPlanetPath = `miniplanet-${i}.osm.pbf`
   } else {
-    console.log('There is no ${process.argv[2]}.')
+    console.log(`There is no ${process.argv[2]}.`)
     process.exit()
   }
 }
