@@ -53,7 +53,7 @@ const iso = () => {
 
 const extract = (z, x, y) => {
   return new Promise((resolve, reject) => {
-    const startTime = iso()
+    const startTime = new Date()
     const bbox = tilebelt.tileToBBOX([x, y, z])
     const extractConfigPath = tempy.file({ extension: 'json' })
     const tmpPath = `${pbfDirPath}/part-${z}-${x}-${y}.osm.pbf`
@@ -64,7 +64,7 @@ const extract = (z, x, y) => {
         x: x,
         y: y,
         startTime: startTime,
-        endTime: iso(),
+        endTime: new Date(),
         exitState: 'pbf exists'
       })
       resolve(null)
@@ -106,7 +106,7 @@ const produce = (z, x, y) => {
         x: x,
         y: y,
         startTime: startTime,
-        endTime: iso(),
+        endTime: new Date(),
         exitState: 'mbtiles exists'
       })
       resolve(null)
@@ -166,7 +166,7 @@ const produce = (z, x, y) => {
         x: x,
         y: y,
         startTime: startTime,
-        endTime: iso(),
+        endTime: endTime,
         exitStatus: 'mbtiles created',
         productionSeconds: (endTime - startTime) / 1000,
         mbtilesSize: mbtilesSize,
