@@ -6,11 +6,12 @@
   maxy: 25
   exportConfigPath: ./osmium-export-config.json
   modifyPath: ./modify.js
-  pbfDirPath: pbf
-  mbtilesDirPath: mbtiles
-  concurrent: 2
-  planetPath: ../welt/planet-190318.osm.pbf
-  skipMiniPlanet: false
+  pbfDirPath: /mnt/d/320/pbf
+  mbtilesDirPath: /mnt/d/320/mbtiles
+  miniplanetDirPath: /mnt/d/320
+  concurrent: 1
+  planetPath: /mnt/d/planet/planet-190318.osm.pbf
+  skipMiniplanet: false
   skipExistingPbf: false
   skipExistingMbtiles: false
 }
