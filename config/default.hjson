@@ -9,8 +9,8 @@
   pbfDirPath: pbf
   mbtilesDirPath: mbtiles
   concurrent: 2
-  planetPath: ../welt/planet-190304.osm.pbf
-  skipMiniPlanet: true
-  skipExistingPbf: true
+  planetPath: /Volumes/easter-egg/planet/planet-190429.osm.pbf
+  skipMiniPlanet: false
+  skipExistingPbf: false 
   skipExistingMbtiles: false
 }
