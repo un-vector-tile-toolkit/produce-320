@@ -2,7 +2,7 @@ pbf
 mbtiles
 extractConfig.json
 exportConfig.json
-miniplanet.osm.pbf
+*.osm.pbf
 
 # Logs
 logs

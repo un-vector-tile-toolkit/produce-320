@@ -10,23 +10,41 @@ const winston = require('winston')
 const tempy = require('tempy')
 const Parser = require('json-text-sequence').parser
 const nfm = require('./nfm')
+const duodecim = require('../duodecim')
 
 winston.configure({
-  transports: [new winston.transports.Console()]
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'produce-320.log' })
+  ]
 })
 
 // configuration constants
 const z = config.get('z')
-const minx = config.get('minx')
-const miny = config.get('miny')
-const maxx = config.get('maxx')
-const maxy = config.get('maxy')
+const miniplanetDirPath = config.get('miniplanetDirPath')
+
+let minx = config.get('minx')
+let miny = config.get('miny')
+let maxx = config.get('maxx')
+let maxy = config.get('maxy')
+let miniplanetPath = tempy.file({ extension: 'osm.pbf' })
+
+if (process.argv.length === 3) {
+  const i = parseInt(process.argv[2])
+  if (duodecim[i]) {
+    [minx, miny, maxx, maxy] = duodecim[i]
+    miniplanetPath = `${miniplanetDirPath}/miniplanet-${i}.osm.pbf`
+  } else {
+    console.log(`There is no ${process.argv[2]}.`)
+    process.exit()
+  }
+}
+
 const exportConfigPath = config.get('exportConfigPath')
 const pbfDirPath = config.get('pbfDirPath')
 const mbtilesDirPath = config.get('mbtilesDirPath')
 const planetPath = config.get('planetPath')
-const miniPlanetPath = tempy.file({ extension: 'osm.pbf' })
-const skipMiniPlanet = config.get('skipMiniPlanet')
+const skipMiniplanet = config.get('skipMiniplanet')
 const skipExistingPbf = config.get('skipExistingPbf')
 const skipExistingMbtiles = config.get('skipExistingMbtiles')
 
@@ -36,7 +54,7 @@ const iso = () => {
 
 const extract = (z, x, y) => {
   return new Promise((resolve, reject) => {
-    const startTime = iso()
+    const startTime = new Date()
     const bbox = tilebelt.tileToBBOX([x, y, z])
     const extractConfigPath = tempy.file({ extension: 'json' })
     const tmpPath = `${pbfDirPath}/part-${z}-${x}-${y}.osm.pbf`
@@ -47,7 +65,7 @@ const extract = (z, x, y) => {
         x: x,
         y: y,
         startTime: startTime,
-        endTime: iso(),
+        endTime: new Date(),
         exitState: 'pbf exists'
       })
       resolve(null)
@@ -64,7 +82,7 @@ const extract = (z, x, y) => {
       const osmium = spawn('osmium', [
         'extract', '--config', extractConfigPath,
         '--strategy=smart', '--overwrite', '--no-progress',
-        skipMiniPlanet ? planetPath : miniPlanetPath
+        skipMiniplanet ? planetPath : miniplanetPath
       ], { stdio: 'inherit' })
       osmium.on('close', () => {
         fs.renameSync(tmpPath, dstPath)
@@ -89,7 +107,7 @@ const produce = (z, x, y) => {
         x: x,
         y: y,
         startTime: startTime,
-        endTime: iso(),
+        endTime: new Date(),
         exitState: 'mbtiles exists'
       })
       resolve(null)
@@ -149,10 +167,10 @@ const produce = (z, x, y) => {
         x: x,
         y: y,
         startTime: startTime,
-        endTime: iso(),
+        endTime: endTime,
         exitStatus: 'mbtiles created',
         productionSeconds: (endTime - startTime) / 1000,
-        mbtilesSize: mbtilesSize
+        mbtilesSize: mbtilesSize,
         bytesPerMilliseconds: mbtilesSize / (endTime - startTime)
       })
       resolve(null)
@@ -169,15 +187,15 @@ const queue = new Queue(async (t, cb) => {
       x: x,
       y: y,
       startTime: startTime,
-      endTime: endTime,
+      endTime: new Date(),
       exitState: 'no features'
     })
   } else {
     try {
-      if (!skipMiniPlanet) await extract(z, x, y)
+      if (!skipMiniplanet) await extract(z, x, y)
       await produce(z, x, y)
     } catch (err) {
-      winston.error(`${iso()}: ${error.stack} (${z}-${x}-${y})`)
+      winston.error(`${iso()}: ${err.stack} (${z}-${x}-${y})`)
     }
   }
   return cb(null)
@@ -195,11 +213,11 @@ queue.on('empty', () => {
 
 queue.on('task_finish', (taskId, result, stats) => {
   if (queueEmpty) {
-    if (!skipMiniPlanet) deleteMiniPlanet()
+    if (!skipMiniplanet) deleteMiniplanet()
   }
 })
 
-const createMiniPlanet = () => {
+const createMiniplanet = () => {
   return new Promise((resolve, reject) => {
     const lowerCorner = tilebelt.tileToBBOX([minx, maxy, z])
     const upperCorner = tilebelt.tileToBBOX([maxx, miny, z])
@@ -211,27 +229,27 @@ const createMiniPlanet = () => {
       'extract', `--bbox=${bbox.join(',')}`,
       '--strategy=smart', '--overwrite', '--progress', '--verbose',
       '--output-format=pbf,pbf_compression=false,add_metadata=false',
-      `--output=${miniPlanetPath}`, planetPath
+      `--output=${miniplanetPath}`, planetPath
     ], { stdio: 'inherit' }).on('exit', code => {
       if (code === 0) {
         resolve(null)
       } else {
-        deleteMiniPlanet()
-        reject(new Error(`createMiniPlanet failed.`))
+        deleteMiniplanet()
+        reject(new Error(`createMiniplanet failed.`))
       }
     })
   })
 }
 
-const deleteMiniPlanet = () => {
-  fs.unlink(miniPlanetPath, (err) => {
+const deleteMiniplanet = () => {
+  fs.unlink(miniplanetPath, (err) => {
     if (err) throw err
-    winston.info(`${iso()}: deleted ${miniPlanetPath}`)
+    winston.info(`${iso()}: deleted ${miniplanetPath}`)
   })
 }
 
 const main = async () => {
-  if (!skipMiniPlanet) { await createMiniPlanet() }
+  if (!skipMiniplanet) { await createMiniplanet() }
   for (let x = minx; x <= maxx; x++) {
     for (let y = miny; y <= maxy; y++) {
       queue.push([z, x, y])
