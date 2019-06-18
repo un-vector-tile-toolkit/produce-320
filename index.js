@@ -14,7 +14,7 @@ const duodecim = require('../duodecim')
 
 winston.configure({
   transports: [
-    new winston.transports.Console(),
+    // new winston.transports.Console(),
     new winston.transports.File({ filename: 'produce-320.log' })
   ]
 })

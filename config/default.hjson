@@ -6,11 +6,12 @@
   maxy: 25
   exportConfigPath: ./osmium-export-config.json
   modifyPath: ./modify.js
-  pbfDirPath: pbf
-  mbtilesDirPath: mbtiles
-  concurrent: 2
-  planetPath: /Volumes/easter-egg/planet/planet-190429.osm.pbf
-  skipMiniPlanet: false
+  pbfDirPath: /mnt/s/raspberry-test/pbf
+  mbtilesDirPath: /mnt/s/raspberry-test/mbtiles
+  concurrent: 1
+  planetPath: /mnt/s/raspberry-test/planet-190610.osm.pbf
+  miniplanetDirPath: /mnt/s/raspberry-test/miniplanet
+  skipMiniplanet: false
   skipExistingPbf: false 
   skipExistingMbtiles: false
 }
