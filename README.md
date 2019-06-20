@@ -1,5 +1,5 @@
 # produce-320
-A quick vector tile production from planet.osm.pbf. This tool is designed to produce global vector tiles around within 5 days.
+A quick vector tile production from planet.osm.pbf. This tool is designed to produce global vector tiles around within 5 days. The actual record was 80 hours as in the [FOSS4G 2019 paper](https://github.com/un-vector-tile-toolkit/bucharest-paper-drafts).
 
 # install
 You need the latest versions of osmium-tool and Tippecanoe installed in your system. After that, you need to install the tool as below.
